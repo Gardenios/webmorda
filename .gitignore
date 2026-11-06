@@ -1,0 +1,6 @@
+# служебное
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
