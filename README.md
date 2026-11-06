@@ -11,10 +11,9 @@
 
 | Файл | Что это |
 |---|---|
-| `index.html` | страница; подключает Telegram WebApp SDK, `config.js`, `app.js` |
+| `index.html` | страница; подключает Telegram WebApp SDK и `app.js` |
 | `app.js` | вся логика: вкладки, формы, опрос статуса |
 | `app.css` | стили (темы берутся из цветов Telegram) |
-| `config.js` | `window.MINIAPP_API` — адрес сервера API; пусто = тот же сайт |
 
 ## Правила
 
@@ -26,7 +25,7 @@
 
 ## Как клиент говорит с сервером
 
-Все запросы — `POST` с JSON, в заголовке `X-Telegram-Init-Data` — `Telegram.WebApp.initData`
+Все запросы идут на тот же адрес, с которого открыта панель: `POST` с JSON, в заголовке `X-Telegram-Init-Data` — `Telegram.WebApp.initData`
 (без него сервер отвечает 403). Ответ — `{"ok": true, ...}` или `{"ok": false, "error": "текст"}`.
 
 | Адрес | Что делает |

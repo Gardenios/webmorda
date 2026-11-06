@@ -62,11 +62,8 @@ function toast(text, kind) {
   }
 }
 
-/* адрес сервера API: пусто — тот же сайт; на GitHub Pages его задаёт config.js */
-const API_BASE = String(window.MINIAPP_API || "").replace(/\/+$/, "");
-
 async function api(path, body) {
-  const resp = await fetch(API_BASE + path, {
+  const resp = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Telegram-Init-Data": (tg && tg.initData) || "" },
     body: JSON.stringify(body || {}),
@@ -1022,7 +1019,7 @@ function loginDesktopCard() {
         h("div", { class: "code-big", text: r.code }),
         h("ol", { class: "steps" },
           h("li", {}, "Откройте программу на ПК → вкладка «Вход»."),
-          h("li", {}, "В блоке «Перенести в Mini App» укажите адрес ", h("code", { class: "k", text: API_BASE || location.origin })),
+          h("li", {}, "В блоке «Перенести в Mini App» укажите адрес ", h("code", { class: "k", text: location.origin })),
           h("li", {}, "Введите этот код и нажмите «Перенести»."),
           h("li", {}, "Остановите бота на ПК, чтобы аккаунтом не играли два бота сразу.")),
         h("div", { class: "hint", text: "Код действует 10 минут и срабатывает один раз." }));
