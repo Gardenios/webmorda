@@ -446,14 +446,19 @@ function bossFloors() {
   return floors.sort();
 }
 
+// Босс «в работе»: бот создаёт на него бои или принимает приглашения.
+function bossActive(cfg) {
+  return !!(cfg && (cfg.enabled || cfg.accept_invitations));
+}
+
 function renderBossTools(box, reload) {
   const cfgs = S.bosses.config;
-  const enabledFloors = new Set(S.bosses.list.filter((b) => (cfgs[b.id] || {}).enabled).map((b) => b.floor || "?"));
+  const enabledFloors = new Set(S.bosses.list.filter((b) => bossActive(cfgs[b.id])).map((b) => b.floor || "?"));
   const floors = [["Все", "Все"], ...bossFloors().map((f) => [f, f + (enabledFloors.has(f) ? "•" : "")])];
   box.replaceChildren(
     h("div", { class: "row wrap" },
       h("label", { class: "row" }, toggle(S.onlyAvail, (v) => { S.onlyAvail = v; renderBossList(); }), h("span", { class: "hint", text: "доступные" })),
-      h("label", { class: "row" }, toggle(S.onlyEnabled, (v) => { S.onlyEnabled = v; renderBossList(); }), h("span", { class: "hint", text: "включённые" }))),
+      h("label", { class: "row" }, toggle(S.onlyEnabled, (v) => { S.onlyEnabled = v; renderBossList(); }), h("span", { class: "hint", text: "включённые / приглашения" }))),
     h("div", { class: "btns", style: "margin:8px 0" },
       h("button", { class: "btn small", text: "⚙ Общие", onclick: () => bossSettingsSheet(null, reload) }),
       h("button", { class: "btn small", text: "✓ Включить видимых", onclick: (e) => act(e.target,
@@ -478,7 +483,7 @@ function visibleBosses() {
   return S.bosses.list.filter((b) =>
     (S.bossFloor === "Все" || (b.floor || "?") === S.bossFloor) &&
     (!S.onlyAvail || b.is_available !== false) &&
-    (!S.onlyEnabled || (cfgs[b.id] || {}).enabled));
+    (!S.onlyEnabled || bossActive(cfgs[b.id])));
 }
 
 function renderBossList() {
@@ -664,6 +669,14 @@ async function friendPicker(title, selected, onsave) {
 function tabChar(root) {
   const p = (S.status && S.status.player) || {};
   const ups = p.upgrades || {};
+  // Возраст лимитов прокачки; старше 5 минут — тихо подтягиваем свежие
+  // (после смены дня игра сбрасывает лимиты). Не чаще раза в минуту.
+  const now = (S.status && S.status.now) || Math.floor(Date.now() / 1000);
+  const upAge = p.upgrades_at ? Math.max(0, now - p.upgrades_at) : -1;
+  if ((upAge < 0 || upAge > 300) && Date.now() - (S.charAutoAt || 0) > 60000) {
+    S.charAutoAt = Date.now();
+    quiet(call("load_player").then(() => tick()).then(() => { if (S.tab === "char") renderTab(); }));
+  }
   const statCard = (key, icon, title) => {
     const u = ups[key] || {};
     const wallet = p[u.currency] || 0;
@@ -673,7 +686,8 @@ function tabChar(root) {
       `${title}: прокачка запущена, ход — в логе`);
     return h("div", { class: "tile" },
       h("b", { text: `${icon} ${fmt(p[key])}` }), h("small", { text: title }),
-      h("div", { class: "hint", text: u.cost ? `след. ${fmt(u.cost)} ${CUR[u.currency] || u.currency} · сегодня ${u.remaining ?? "?"}/${u.limit ?? "?"}` : "нет данных" }),
+      h("div", { class: "hint", text: u.cost ? `след. ${fmt(u.cost)} ${CUR[u.currency] || u.currency} · сегодня ${u.remaining ?? "?"}/${u.limit ?? "?"}` +
+        (upAge >= 0 ? ` · ↻ ${ago(upAge)}` : "") : "нет данных" }),
       h("div", { class: "btns", style: "margin-top:6px" },
         h("button", { class: "btn small", text: "+1", disabled: max < 1, onclick: run(1) }),
         h("button", { class: "btn small", text: "+5", disabled: max < 5, onclick: run(5) }),
